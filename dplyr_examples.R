@@ -28,8 +28,18 @@ View(flights) #see flights overall
 #Create new variables with functions of existing variables (mutate())
 #Collapse many values down to a single summary (summarise())
 
-
-
+filter(flights, month == 1, day == 1)
+jan1 <- filter(flights, month == 1, day == 1)
+(dec25 <- filter(flights, month == 12, day == 25))
+filter(flights, month ==1)
+sqrt(2) ^ 2 == 2
+#> [1] FALSE
+1 / 49 * 49 == 1
+#> [1] FALSE
+near(sqrt(2) ^ 2,  2)
+#> [1] TRUE
+near(1 / 49 * 49, 1)
+#> [1] TRUE
 
 
 
