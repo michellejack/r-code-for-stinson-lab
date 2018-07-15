@@ -10,59 +10,59 @@ if (!require("ggplot2")) install.packages("ggplot2")
 if (!require("reshape2")) install.packages("reshape2")
 #################################
 #Practice code from 'Cookbook for R'
+#load data from 'tips' dataset & create a data frame 'dat'
 dat <- data.frame(
   time = factor(c("Lunch","Dinner"), levels=c("Lunch","Dinner")),
   total_bill = c(14.89, 17.23)
 )
-dat
-library(ggplot2)
-# Very basic bar graph
+dat #show data frame
+library(ggplot2) #load ggplot
+# Create a very basic bar graph using ggplot
 ggplot(data=dat, aes(x=time, y=total_bill)) +
   geom_bar(stat="identity")
-
 
 # Map the time of day to different fill colors
 ggplot(data=dat, aes(x=time, y=total_bill, fill=time)) +
   geom_bar(stat="identity")
 
-## This would have the same result as above
-# ggplot(data=dat, aes(x=time, y=total_bill)) +
-#    geom_bar(aes(fill=time), stat="identity")
+## This code have the same result as the previous lines of code: try it!
+ggplot(data=dat, aes(x=time, y=total_bill)) +
+  geom_bar(aes(fill=time), stat="identity")
 
-
-# Add a black outline
+# Add a black outline to the bars
 ggplot(data=dat, aes(x=time, y=total_bill, fill=time)) +
   geom_bar(colour="black", stat="identity")
 
-
-# No legend, since the information is redundant
+# Remove legend, since the information is redundant
 ggplot(data=dat, aes(x=time, y=total_bill, fill=time)) +
   geom_bar(colour="black", stat="identity") +
   guides(fill=FALSE)
 
 # Add title, narrower bars, fill color, and change axis labels
+# Here the fill colors are 'Hex codes' see http://www.color-hex.com/ for examples: 
 ggplot(data=dat, aes(x=time, y=total_bill, fill=time)) + 
   geom_bar(colour="black", fill="#DD8888", width=.8, stat="identity") + 
   guides(fill=FALSE) +
   xlab("Time of day") + ylab("Total bill") +
   ggtitle("Average bill for 2 people")
-library(reshape2)
+
+library(reshape2) #load reshape2 package - it transforms the data between wide & long formats
+# see: http://seananderson.ca/2013/10/19/reshape/
 # Look at fist several rows
 head(tips)
 # Bar graph of counts
 ggplot(data=tips, aes(x=day)) +
   geom_bar(stat="count")
 ## Equivalent to this, since stat="bin" is the default:
-# ggplot(data=tips, aes(x=day)) +
-#    geom_bar()
-
+ ggplot(data=tips, aes(x=day)) +
+  geom_bar()
 
 # Basic line graph
 ggplot(data=dat, aes(x=time, y=total_bill, group=1)) +
   geom_line()
-## This would have the same result as above
-# ggplot(data=dat, aes(x=time, y=total_bill)) +
-#     geom_line(aes(group=1))
+## This would have the same result as above - try it!
+ggplot(data=dat, aes(x=time, y=total_bill)) +
+  geom_line(aes(group=1))
 
 # Add points
 ggplot(data=dat, aes(x=time, y=total_bill, group=1)) +
@@ -83,7 +83,8 @@ ggplot(data=dat, aes(x=time, y=total_bill, group=1)) +
   geom_point() +
   expand_limits(y=0) +
   xlab("Time of day") + ylab("Total bill") +
-  ggtitle("Average bill for 2 people")
+  ggtitle("Average bill for 2 people") +
+  theme(plot.title = element_text(hjust = 0.5)) #this line of code centers the text
 
 dat1 <- data.frame(
   sex = factor(c("Female","Female","Male","Male")),
@@ -92,7 +93,7 @@ dat1 <- data.frame(
 )
 dat1
 
-# Stacked bar graph -- this is probably not what you want
+# Stacked bar graph -- example
 ggplot(data=dat1, aes(x=time, y=total_bill, fill=sex)) +
   geom_bar(stat="identity")
 
@@ -123,7 +124,6 @@ ggplot(data=dat1, aes(x=time, y=total_bill, group=sex, shape=sex)) +
   geom_line() +
   geom_point()
 
-
 # Use thicker lines and larger points, and hollow white-filled points
 ggplot(data=dat1, aes(x=time, y=total_bill, group=sex, shape=sex)) + 
   geom_line(size=1.5) + 
@@ -134,7 +134,6 @@ ggplot(data=dat1, aes(x=sex, y=total_bill, group=time, shape=time, color=time)) 
   geom_line() +
   geom_point()
 
-
 # Finished bar graph
 ggplot(data=dat1, aes(x=time, y=total_bill, fill=sex)) + 
   geom_bar(colour="black", stat="identity",
@@ -143,7 +142,10 @@ ggplot(data=dat1, aes(x=time, y=total_bill, fill=sex)) +
   scale_fill_hue(name="Sex of payer") +      # Set legend title
   xlab("Time of day") + ylab("Total bill") + # Set axis labels
   ggtitle("Average bill for 2 people") +     # Set title
-  theme_bw()
+  theme_bw() +                               # Set background white instead of default 'grey'
+  theme(plot.title = element_text(hjust = 0.5))+ #Center title
+  scale_y_continuous(expand = c(0,0)) +          # Code to expand y-axis
+  expand_limits(y=7)                             # Eliminates gap that comes with default graphs
 
 
 # Finished line graph
@@ -162,7 +164,7 @@ ggplot(data=dat1, aes(x=time, y=total_bill, group=sex, shape=sex, colour=sex)) +
   theme(legend.position=c(.7, .4))           # Position legend inside
 # This must go after theme_bw
 
-
+#When the variable on the x-axis is numeric, it is sometimes useful to treat it as continuous, and sometimes useful to treat it as categorical. In this data set, the dose is a numeric variable with values 0.5, 1.0, and 2.0. It might be useful to treat these values as equal categories when making a graph.
 datn <- read.table(header=TRUE, text='
 supp dose length
                    OJ  0.5  13.23
