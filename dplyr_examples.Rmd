@@ -1,0 +1,271 @@
+---
+title: "Dplyr Examples"
+author: "Michelle R. Jackson"
+date: "7/26/2018"
+output: html_document
+---
+Purpose: Code explains how to transform data with the 'dplyr' function
+Source: R for Data Science by Garrett Grolemund & Hadley Wickham
+http://r4ds.had.co.nz/transform.html 
+#####Download required packages 
+```{r}
+if (!require("dplyr")) install.packages("dplyr")
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("nycflights13")) install.packages("nycflights13") 
+```
+#####Analyses
+Load datasets & packages.
+```{r}
+library(nycflights13)
+library(tidyverse) 
+```
+See flights tibble.
+```{r}
+nycflights13::flights 
+```
+See flights overall.
+```{r}
+View(flights)
+```
+#####Dplyr & Tibble components:
+
+* 'int'= "integers"
+* 'dbl' = "doubles" (real numbers)
+* 'chr' = "character vectors" (strings)
+* 'dttm' = "date-times" (a date + a time)
+* 'lgl' = "logical" (vectors that are only TRUE or FALSE)
+* 'fctr' = "factors" (represent categorical variables w/ fixed values)
+* 'date' =  "dates"
+
+#####Dplyr basics include the following:
+* (filter()) picks observations by value 
+* (arrange()) reorders rows 
+* (select()) picks variables by name
+* (mutate()) creates new variables w/ functions from existing variables
+* (summarise()) collapses many values down to a single summary
+
+Example of looking at a subset of observations based values:
+```{r}
+filter(flights, month == 1, day == 1) 
+```
+Note: if you want to save the result from above you need the "<-" modifier 
+```{r}
+jan1 <- filter(flights, month == 1, day == 1) 
+```
+Example of printing out results & saving them as a variable:
+```{r}
+(dec25 <- filter(flights, month == 12, day == 25)) 
+```
+Example of needing "==" for equality instead of "="
+```{r}
+filter(flights, month == 1)
+```
+Use "near()" for approximations though instead of "=="
+```{r}
+near(sqrt(2) ^ 2,  2)
+```
+Additional example:
+```{r}
+near(1 / 49 * 49, 1)
+```
+Example of finding all flights that occurred in November & December:
+```{r}
+filter(flights, month == 11 | month == 12)
+```
+This code uses filter() to select every row where x is one of the values in y
+```{r}
+nov_dec <- filter(flights, month %in% c(11, 12))
+```
+Example of finding fights that weren’t delayed (on arrival or departure) 
+by more than two hours. Both filters work!
+```{r}
+filter(flights, !(arr_delay > 120 | dep_delay > 120))
+filter(flights, arr_delay <= 120, dep_delay <= 120)
+```
+To determine if a value is missing use is.na():
+An example: let x be Mary's age. We don't know how old she is.
+```{r}
+x <- NA
+is.na(x)
+```
+Note: filter() only includes rows when condition = TRUE; it exclude FALSE & NA
+values. Want to preserve missing values? Ask for them like this:
+```{r}
+df <- tibble(x = c(1, NA, 3))
+filter(df, x > 1)
+filter(df, is.na(x) | x > 1)
+```
+arrange() works like filter() but it doesn't select rows, it reorders them.
+```{r}
+arrange(flights, year, month, day)
+```
+desc() reorders by a column in descending order - see:
+```{r}
+arrange(flights, desc(dep_delay))
+```
+Example of how missing values are always sorted at the end:
+```{r}
+df <- tibble(x = c(5, 2, NA))
+arrange(df, x)
+arrange(df, desc(x))
+```
+select() let's you closely examine a subset of your data with operations 
+based on variable names.
+```{r}
+select(flights, year, month, day)
+select(flights, year:day)
+select(flights, -(year:day))
+```
+Examples of other helper functions you can use within the select() function:
+
+*  starts_with("abc"): matches names beginning with “abc”
+*  ends_with("xyz"): matches names ending with “xyz”
+*  contains("ijk"): matches names containing “ijk”
+*  matches("(.)\\1"): selects variables matching a regular expression;
+  specifically variables containing repeated characters. 
+*  num_range("x", 1:3): matches x1, x2 and x3.
+* use rename(): renames variables
+Example of rename() function
+```{r}
+rename(flights, tail_num = tailnum)
+```
+Using select() with the everything() helper to move variables 
+to the start of the data frame.
+```{r}
+select(flights, time_hour, air_time, everything())
+```
+Note: mutate() adds new columns at the end of your dataset.
+To see all the columns use View().
+Example of creating a narrower data set and changes with mutate.
+```{r}
+flights_sml <- select(flights, 
+                      year:day, 
+                      ends_with("delay"), 
+                      distance, 
+                      air_time
+)
+mutate(flights_sml,
+       gain = dep_delay - arr_delay,
+       speed = distance / air_time * 60
+)
+mutate(flights_sml,
+       gain = dep_delay - arr_delay,
+       hours = air_time / 60,
+       gain_per_hour = gain / hours
+)
+```
+To keep the new variables from the code above use transmute():
+```{r}
+transmute(flights,
+          gain = dep_delay - arr_delay,
+          hours = air_time / 60,
+          gain_per_hour = gain / hours
+)
+```
+summarise() collapses a data frame to a single row:
+```{r}
+summarise(flights, delay = mean(dep_delay, na.rm = TRUE))
+```
+summarise() works best with group_by() to go from analyzing the complete dataset
+to individual groups (e.g., a data frame grouped by date gives
+you average delay per date)
+```{r}
+by_day <- group_by(flights, year, month, day)
+summarise(by_day, delay = mean(dep_delay, na.rm = TRUE))
+```
+Example of exploring the relationship between the distance and average flight
+delay for each location:
+```{r}
+by_dest <- group_by(flights, dest)
+delay <- summarise(by_dest,
+                   count = n(),
+                   dist = mean(distance, na.rm = TRUE),
+                   delay = mean(arr_delay, na.rm = TRUE)
+)
+delay <- filter(delay, count > 20, dest != "HNL")
+ggplot(data = delay, mapping = aes(x = dist, y = delay)) +
+  geom_point(aes(size = count), alpha = 1/3) +
+  geom_smooth(se = FALSE)
+```
+Guided example from this chapter about how to prepare this data for additional
+analyses:
+
+* Group flights by destination
+* Summarise to compute distance, average delay, and number of flights
+* Filter to remove noisy points and Honolulu airport (which is an outlier
+)
+To deal with the tediousness of having to name each intermediate data frame use
+the pipe, %>%:
+```{r}
+delays <- flights %>% 
+  group_by(dest) %>% 
+  summarise(
+    count = n(),
+    dist = mean(distance, na.rm = TRUE),
+    delay = mean(arr_delay, na.rm = TRUE)
+  ) %>% 
+  filter(count > 20, dest != "HNL")
+```
+ %>% when reading code is pronounced “then”
+Examples: x %>% f(y) makes f(x, y)
+x %>% f(y) %>% g(z) makes g(f(x, y), z)
+
+Additional example of using %>% but the issue of missing values comes up:
+```{r}
+flights %>% 
+  group_by(year, month, day) %>% 
+  summarise(mean = mean(dep_delay))
+```
+To remove missing values use the na.rm argument:
+```{r}
+flights %>% 
+  group_by(year, month, day) %>% 
+  summarise(mean = mean(dep_delay, na.rm = TRUE))
+```
+How to remove cancelled flights:
+```{r}
+not_cancelled <- flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+not_cancelled %>% 
+  group_by(year, month, day) %>% 
+  summarise(mean = mean(dep_delay))
+```
+The authors reccommend when doing an aggregation like above, 
+it’s helpful include either a count (n()), 
+or a count of non-missing values (sum(!is.na(x)))
+```{r}
+delays <- not_cancelled %>% 
+  group_by(tailnum) %>% 
+  summarise(
+    delay = mean(arr_delay)
+  )
+ggplot(data = delays, mapping = aes(x = delay)) + 
+  geom_freqpoly(binwidth = 10)
+```
+How to create a scatterplot of number of flights vs. average delay:
+```{r}
+delays <- not_cancelled %>% 
+  group_by(tailnum) %>% 
+  summarise(
+    delay = mean(arr_delay, na.rm = TRUE),
+    n = n()
+  )
+ggplot(data = delays, mapping = aes(x = n, y = delay)) + 
+  geom_point(alpha = 1/10)
+```
+Here's how to filter out the groups with the smallest numbers of observations, 
+and integrate ggplot2 into dplyr flows:
+```{r}
+delays %>% 
+  filter(n > 25) %>% 
+  ggplot(mapping = aes(x = n, y = delay)) + 
+  geom_point(alpha = 1/10)
+```
+
+####Useful 'hot keys' reccommended by the authors
+
+*  Cmd/Ctrl + Enter: sends the whole block of code  
+*  Cmd/Ctrl + Shift + P : resends previously sent chunk from editor to console
+  enabling editing of that intial block
+
+See other great examples of how to work with dplyr here at the link above!
