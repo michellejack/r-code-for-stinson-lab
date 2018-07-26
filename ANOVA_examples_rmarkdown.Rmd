@@ -1,0 +1,69 @@
+---
+title: "ANOVA Examples"
+author: "Michelle R. Jackson"
+date: "7/25/2018"
+output: html_document
+---
+
+Original Date: July 11, 2018  
+R version: 3.5.0 "Joy in Playing"  
+Purpose: Code explains how to perform a single factor ANOVA in R  Source:http://environmentalcomputing.net/analysis-variance-single-factor/
+
+##Analysis
+Download Turtles file from URL above or Github.
+```{r}
+Turtles <- read.csv(file = "Turtles.csv",header=TRUE)
+```
+Check that the temperature variable is a factor with the 'str' "string" function.
+```{r}
+str(Turtles) 
+```
+There are numbers for the four levels of the Temperature treatment, we need to change the variable to a factor instead of an integer.
+```{r}
+Turtles$Temperature <- factor(Turtles$Temperature)
+```
+We want to create an ANOVA comparing hatching time days across temperature with the 'aov' function.
+```{r}
+Turtles.aov <- aov(Days ~ Temperature, data = Turtles)
+```
+Obtain the output of the ANOVA with the 'summary' function.
+```{r}
+summary(Turtles.aov)
+```
+Same analysis can be created with 'lm' function.
+```{r}
+Turtles.lm <- lm(Days ~ Temperature,data=Turtles)
+```
+Obtain the output of the 'lm' function.
+```{r}
+summary(Turtles.lm)
+```
+Conduct a comparison between each mean and the other means by a Tukey test with the 'TukeyHSD' function.
+```{r}
+TukeyHSD(Turtles.aov)
+```
+Look at assumptions following the code below. This line of code put two plots in the same window.
+```{r}
+par(mfrow = c(1,2))
+```
+Look at a histogram of the residuals.
+```{r}
+hist(Turtles.aov$residuals)
+```
+Look at QQplot of the data.
+```{r}
+plot(Turtles.aov,which=2)
+```
+Look at homogeneity of variance 
+```{r}
+plot(Turtles.aov,which=1)
+```
+Create a boxplot of the results.
+```{r}
+boxplot(Days~Temperature, data=Turtles, ylab = "Hatching time (days)", xlab = "Temperature (°C)")
+```
+
+
+
+
+
